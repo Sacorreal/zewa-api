@@ -4,6 +4,7 @@ import type { App } from 'supertest/types';
 import type { DataSource } from 'typeorm';
 import {
   bootstrapSuperAdmin,
+  resetSuperAdminPassword,
   SuperAdminBootstrapError,
 } from '../src/cli/superadmin-bootstrap';
 import { PasswordHasher } from '../src/shared/security/password-hasher';
@@ -602,6 +603,44 @@ describe('Administración global de clientes (e2e)', () => {
       await http().get(`${API}/auth/me`).set(auth).expect(200);
       await http().post(`${API}/auth/logout`).set(auth).expect(204);
       await http().get(`${API}/auth/me`).set(auth).expect(401);
+    });
+  });
+
+  // Va al final: cierra todas las sesiones del SUPERADMIN.
+  describe('restablecimiento de la contraseña del SUPERADMIN (CLI)', () => {
+    const NEW_PASSWORD = 'nueva-clave-superadmin';
+
+    it('rechaza un correo que no es de un superadministrador', async () => {
+      await expect(
+        resetSuperAdminPassword(
+          { email: 'nadie@zewa.test', password: NEW_PASSWORD },
+          dataSource,
+          new PasswordHasher(),
+        ),
+      ).rejects.toThrow(SuperAdminBootstrapError);
+    });
+
+    it('cambia la contraseña, desbloquea la cuenta y cierra las sesiones', async () => {
+      const { body } = await login(ROOT.email, ROOT.password).expect(200);
+      const openSession = {
+        Authorization: `Bearer ${body.tokens.accessToken as string}`,
+      };
+      await login(ROOT.email, 'clave-equivocada').expect(401);
+
+      await resetSuperAdminPassword(
+        { email: ROOT.email.toUpperCase(), password: NEW_PASSWORD },
+        dataSource,
+        new PasswordHasher(),
+      );
+
+      await http().get(`${API}/auth/me`).set(openSession).expect(401);
+      await login(ROOT.email, ROOT.password).expect(401);
+      await login(ROOT.email, NEW_PASSWORD).expect(200);
+
+      const [audit] = await dataSource.query<{ count: string }[]>(
+        "SELECT count(*) FROM audit_logs WHERE action = 'SUPERADMIN_PASSWORD_RESET'",
+      );
+      expect(audit.count).toBe('1');
     });
   });
 });

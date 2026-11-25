@@ -1,5 +1,6 @@
 export enum AuditAction {
   SuperAdminBootstrapped = 'SUPERADMIN_BOOTSTRAPPED',
+  SuperAdminPasswordReset = 'SUPERADMIN_PASSWORD_RESET',
   LoginSucceeded = 'AUTH_LOGIN_SUCCEEDED',
   LoginFailed = 'AUTH_LOGIN_FAILED',
   ClientCreated = 'CLIENT_CREATED',

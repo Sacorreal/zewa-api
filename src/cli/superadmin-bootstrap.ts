@@ -1,7 +1,9 @@
-import type { DataSource } from 'typeorm';
+import type { DataSource, EntityManager } from 'typeorm';
+import { IsNull } from 'typeorm';
 import { AuditAction, AuditEntityType } from '../modules/audit/audit-action';
 import { AuditService } from '../modules/audit/audit.service';
 import { AuditLog } from '../modules/audit/entities/audit-log.entity';
+import { AuthSession } from '../modules/auth/entities/auth-session.entity';
 import {
   PlatformRole,
   User,
@@ -25,16 +27,16 @@ export interface SuperAdminCredentials {
   password: string;
 }
 
-/**
- * Crea el SUPERADMIN inicial. Solo procede si todavía no existe ninguno y si
- * el correo no pertenece ya a otra identidad: el rol global nunca se otorga a
- * una cuenta existente ni por API.
- */
-export async function bootstrapSuperAdmin(
+interface ValidatedCredentials {
+  email: string;
+  passwordHash: string;
+}
+
+/** Valida correo y política de contraseña, y calcula el hash fuera de la transacción. */
+async function validateCredentials(
   { email, password }: SuperAdminCredentials,
-  dataSource: DataSource,
   passwordHasher: PasswordHasher,
-): Promise<User> {
+): Promise<ValidatedCredentials> {
   const normalizedEmail = normalizeEmail(email);
   if (!EMAIL_PATTERN.test(normalizedEmail)) {
     throw new SuperAdminBootstrapError('El correo no es válido.');
@@ -42,7 +44,45 @@ export async function bootstrapSuperAdmin(
   if (!isPasswordAcceptable(password)) {
     throw new SuperAdminBootstrapError(PASSWORD_POLICY_MESSAGE);
   }
-  const passwordHash = await passwordHasher.hash(password);
+  return {
+    email: normalizedEmail,
+    passwordHash: await passwordHasher.hash(password),
+  };
+}
+
+function recordCliAudit(
+  manager: EntityManager,
+  superAdmin: User,
+  action: AuditAction,
+  command: string,
+): Promise<void> {
+  return new AuditService(manager.getRepository(AuditLog)).record(
+    {
+      actorUserId: superAdmin.id,
+      action,
+      entityType: AuditEntityType.User,
+      entityId: superAdmin.id,
+      newValues: { email: superAdmin.email },
+      meta: { ipAddress: null, userAgent: `cli:${command}` },
+    },
+    manager,
+  );
+}
+
+/**
+ * Crea el SUPERADMIN inicial. Solo procede si todavía no existe ninguno y si
+ * el correo no pertenece ya a otra identidad: el rol global nunca se otorga a
+ * una cuenta existente ni por API.
+ */
+export async function bootstrapSuperAdmin(
+  credentials: SuperAdminCredentials,
+  dataSource: DataSource,
+  passwordHasher: PasswordHasher,
+): Promise<User> {
+  const { email, passwordHash } = await validateCredentials(
+    credentials,
+    passwordHasher,
+  );
 
   return dataSource.transaction(async (manager) => {
     await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -55,7 +95,7 @@ export async function bootstrapSuperAdmin(
         'Ya existe un superadministrador. El bootstrap solo crea el primero.',
       );
     }
-    if (await users.existsBy({ email: normalizedEmail })) {
+    if (await users.existsBy({ email })) {
       throw new SuperAdminBootstrapError(
         'El correo ya pertenece a otra cuenta de ZEWA; usa uno exclusivo para el superadministrador.',
       );
@@ -63,23 +103,64 @@ export async function bootstrapSuperAdmin(
 
     const superAdmin = await users.save(
       users.create({
-        email: normalizedEmail,
+        email,
         passwordHash,
         status: UserStatus.Active,
         platformRole: PlatformRole.SuperAdmin,
       }),
     );
-
-    await new AuditService(manager.getRepository(AuditLog)).record(
-      {
-        actorUserId: superAdmin.id,
-        action: AuditAction.SuperAdminBootstrapped,
-        entityType: AuditEntityType.User,
-        entityId: superAdmin.id,
-        newValues: { email: superAdmin.email },
-        meta: { ipAddress: null, userAgent: 'cli:create-superadmin' },
-      },
+    await recordCliAudit(
       manager,
+      superAdmin,
+      AuditAction.SuperAdminBootstrapped,
+      'create-superadmin',
+    );
+    return superAdmin;
+  });
+}
+
+/**
+ * Restablece la contraseña del SUPERADMIN (solo por CLI, con acceso a la BD).
+ * Desbloquea la cuenta y revoca todas sus sesiones abiertas.
+ */
+export async function resetSuperAdminPassword(
+  credentials: SuperAdminCredentials,
+  dataSource: DataSource,
+  passwordHasher: PasswordHasher,
+): Promise<User> {
+  const { email, passwordHash } = await validateCredentials(
+    credentials,
+    passwordHasher,
+  );
+
+  return dataSource.transaction(async (manager) => {
+    const users = manager.getRepository(User);
+    const superAdmin = await users.findOne({
+      where: { email, platformRole: PlatformRole.SuperAdmin },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!superAdmin) {
+      throw new SuperAdminBootstrapError(
+        'No existe un superadministrador con ese correo.',
+      );
+    }
+
+    await users.update(superAdmin.id, {
+      passwordHash,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    });
+    await manager
+      .getRepository(AuthSession)
+      .update(
+        { userId: superAdmin.id, revokedAt: IsNull() },
+        { revokedAt: new Date() },
+      );
+    await recordCliAudit(
+      manager,
+      superAdmin,
+      AuditAction.SuperAdminPasswordReset,
+      'reset-superadmin-password',
     );
     return superAdmin;
   });
