@@ -5,7 +5,9 @@ import {
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsPositive,
   IsString,
+  IsUrl,
   ValidateIf,
   ValidationError,
   validateSync,
@@ -65,6 +67,40 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsIn(['true', 'false'])
   DB_SSL_REJECT_UNAUTHORIZED?: string;
+
+  @ValidateIf(isRemote)
+  @IsString()
+  @IsNotEmpty()
+  CORS_ORIGINS?: string;
+
+  @IsUrl({ require_tld: false })
+  SPACES_ENDPOINT: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SPACES_REGION: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SPACES_BUCKET: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SPACES_ACCESS_KEY_ID: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SPACES_SECRET_ACCESS_KEY: string;
+
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  SPACES_CDN_URL?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  SPACES_SIGNED_URL_TTL_SECONDS?: number;
 }
 
 const describeError = (error: ValidationError): string =>

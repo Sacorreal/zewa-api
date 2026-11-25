@@ -1,4 +1,5 @@
-import { buildDatabaseOptions, EnvReader } from './database-options.factory';
+import type { EnvReader } from '../env-reader';
+import { buildDatabaseOptions } from './database-options.factory';
 
 const readerFrom =
   (env: Record<string, string>): EnvReader =>

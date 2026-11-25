@@ -15,7 +15,7 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
+    it('should return the health message', () => {
       expect(appController.getHello()).toBe('API is running successfully! ✔️');
     });
   });

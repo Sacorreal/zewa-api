@@ -1,8 +1,7 @@
 import { join } from 'path';
 import type { PostgresDataSourceOptions } from 'typeorm/driver/postgres/PostgresDataSourceOptions';
+import { EnvReader, readOptional, readRequired } from '../env-reader';
 import { NodeEnv, isNodeEnv } from '../environment';
-
-export type EnvReader = (key: string) => unknown;
 
 type ConnectionOptions = Pick<
   PostgresDataSourceOptions,
@@ -19,21 +18,6 @@ type ConnectionOptions = Pick<
 
 const DEFAULT_DB_PORT = 5432;
 const MIGRATIONS_GLOB = join(__dirname, '../../../migrations/*.{ts,js}');
-
-function readOptional(read: EnvReader, key: string): string | undefined {
-  const value = read(key);
-  if (typeof value === 'string') return value === '' ? undefined : value;
-  if (typeof value === 'number') return String(value);
-  return undefined;
-}
-
-function readRequired(read: EnvReader, key: string): string {
-  const value = readOptional(read, key);
-  if (value === undefined) {
-    throw new Error(`Falta la variable de entorno ${key}.`);
-  }
-  return value;
-}
 
 const localConnection = (read: EnvReader): ConnectionOptions => ({
   host: readRequired(read, 'DB_HOST'),
