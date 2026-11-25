@@ -28,4 +28,6 @@ export interface EmailOptions {
   provider: EmailProviderName;
   from: string;
   replyTo?: string;
+  /** URL base del frontend (ENDPOINT_APP_WEB) para los enlaces de los correos. */
+  appWebUrl: string;
 }

@@ -7,7 +7,13 @@ export interface RenderedEmail {
   text: string;
 }
 
+/** Configuración que las plantillas necesitan para armar enlaces. */
+export interface EmailTemplateContext {
+  appWebUrl: string;
+}
+
 /** Plantilla pura que convierte el payload de un evento en un correo. */
 export type EmailTemplate<E extends AppEventName> = (
   payload: AppEventPayload<E>,
+  context: EmailTemplateContext,
 ) => RenderedEmail;

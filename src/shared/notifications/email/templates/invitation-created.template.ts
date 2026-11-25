@@ -1,3 +1,4 @@
+import { buildUrl } from '../../../../utils/url';
 import type { EmailTemplate } from '../contracts/email-template';
 import { formatDateTime } from './email-formatters';
 import {
@@ -6,11 +7,16 @@ import {
   renderParagraph,
 } from './email-layout';
 
-export const invitationCreatedTemplate: EmailTemplate<'invitation.created'> = ({
-  clientName,
-  activationUrl,
-  expiresAt,
-}) => {
+/** Ruta del frontend donde el administrador define su contraseña. */
+export const ACTIVATION_PATH = '/activar';
+
+export const invitationCreatedTemplate: EmailTemplate<'invitation.created'> = (
+  { clientName, activationToken, expiresAt },
+  { appWebUrl },
+) => {
+  const activationUrl = buildUrl(appWebUrl, ACTIVATION_PATH, {
+    token: activationToken,
+  });
   const title = `Bienvenido a ZEWA, ${clientName}`;
   const lines = {
     intro: `Fuiste registrado como administrador del conjunto ${clientName} en ZEWA, la plataforma para la gestión de tu propiedad horizontal.`,

@@ -3,6 +3,7 @@ import {
   readOptional,
   readRequired,
 } from '../../config/env-reader';
+import { trimTrailingSlash } from '../../../utils/url';
 import {
   DEFAULT_EMAIL_PROVIDER,
   EMAIL_PROVIDER_NAMES,
@@ -28,5 +29,6 @@ export function buildEmailOptions(read: EnvReader): EmailOptions {
     provider: readProvider(read),
     from: readRequired(read, 'EMAIL_FROM'),
     replyTo: readOptional(read, 'EMAIL_REPLY_TO'),
+    appWebUrl: trimTrailingSlash(readRequired(read, 'ENDPOINT_APP_WEB')),
   };
 }

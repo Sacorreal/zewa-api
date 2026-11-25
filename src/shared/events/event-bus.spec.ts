@@ -16,7 +16,7 @@ const invitationPayload: AppEventPayload<'invitation.created'> = {
   tenantId: 'tenant-1',
   clientName: 'Conjunto Los Pinos',
   email: 'admin@lospinos.co',
-  activationUrl: 'https://zewa.co/activar/abc',
+  activationToken: 'abc',
   expiresAt: new Date('2026-12-01'),
 };
 

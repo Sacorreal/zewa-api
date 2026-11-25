@@ -21,7 +21,8 @@ export interface AppEventMap {
     tenantId: string;
     clientName: string;
     email: string;
-    activationUrl: string;
+    /** Token en claro: solo viaja en el correo; en BD se guarda su hash. */
+    activationToken: string;
     expiresAt: Date;
   };
 }

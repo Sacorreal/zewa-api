@@ -18,7 +18,7 @@ const invitationPayload: AppEventPayload<'invitation.created'> = {
   tenantId: 'tenant-1',
   clientName: 'Conjunto Los Pinos',
   email: 'admin@lospinos.co',
-  activationUrl: 'https://zewa.co/activar/abc',
+  activationToken: 'abc',
   expiresAt: new Date('2026-12-01T15:00:00Z'),
 };
 
@@ -43,6 +43,7 @@ describe('EmailNotificationListener', () => {
               EMAIL_PROVIDER: 'log',
               EMAIL_FROM: 'ZEWA <no-reply@zewa.co>',
               EMAIL_REPLY_TO: 'soporte@zewa.co',
+              ENDPOINT_APP_WEB: 'https://pruebas.zewa.co/',
             }),
           ],
         }),
@@ -85,6 +86,9 @@ describe('EmailNotificationListener', () => {
         to: ['admin@lospinos.co'],
         subject: expect.stringContaining('Conjunto Los Pinos') as string,
         idempotencyKey: 'invitation-created/inv-1',
+        text: expect.stringContaining(
+          'https://pruebas.zewa.co/activar?token=abc',
+        ) as string,
       }),
     );
   });

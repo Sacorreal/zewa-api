@@ -6,11 +6,19 @@ const readerFrom =
   (key) =>
     env[key];
 
+const APP_WEB = { ENDPOINT_APP_WEB: 'https://pruebas.zewa.co/' };
+
 describe('buildEmailOptions', () => {
   it('usa Resend por defecto', () => {
     expect(
-      buildEmailOptions(readerFrom({ EMAIL_FROM: 'ZEWA <no-reply@zewa.co>' })),
-    ).toEqual({ provider: 'resend', from: 'ZEWA <no-reply@zewa.co>' });
+      buildEmailOptions(
+        readerFrom({ EMAIL_FROM: 'ZEWA <no-reply@zewa.co>', ...APP_WEB }),
+      ),
+    ).toEqual({
+      provider: 'resend',
+      from: 'ZEWA <no-reply@zewa.co>',
+      appWebUrl: 'https://pruebas.zewa.co',
+    });
   });
 
   it('lee el proveedor y la dirección de respuesta configurados', () => {
@@ -20,12 +28,14 @@ describe('buildEmailOptions', () => {
           EMAIL_PROVIDER: 'log',
           EMAIL_FROM: 'no-reply@zewa.co',
           EMAIL_REPLY_TO: 'soporte@zewa.co',
+          ...APP_WEB,
         }),
       ),
     ).toEqual({
       provider: 'log',
       from: 'no-reply@zewa.co',
       replyTo: 'soporte@zewa.co',
+      appWebUrl: 'https://pruebas.zewa.co',
     });
   });
 
@@ -39,5 +49,11 @@ describe('buildEmailOptions', () => {
 
   it('exige EMAIL_FROM', () => {
     expect(() => buildEmailOptions(readerFrom({}))).toThrow('EMAIL_FROM');
+  });
+
+  it('exige ENDPOINT_APP_WEB', () => {
+    expect(() =>
+      buildEmailOptions(readerFrom({ EMAIL_FROM: 'no-reply@zewa.co' })),
+    ).toThrow('ENDPOINT_APP_WEB');
   });
 });

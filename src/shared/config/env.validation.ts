@@ -122,6 +122,9 @@ export class EnvironmentVariables {
   @IsEmail()
   EMAIL_REPLY_TO?: string;
 
+  @IsUrl({ require_tld: false })
+  ENDPOINT_APP_WEB: string;
+
   @ValidateIf(usesResend)
   @IsString()
   @IsNotEmpty()

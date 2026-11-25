@@ -3,6 +3,7 @@ import {
   readOptional,
   readRequired,
 } from '../config/env-reader';
+import { trimTrailingSlash } from '../../utils/url';
 import type { StorageOptions } from './contracts/storage.types';
 
 const DEFAULT_SIGNED_URL_TTL_SECONDS = 900;
@@ -19,8 +20,6 @@ function readTtlSeconds(read: EnvReader): number {
   }
   return ttl;
 }
-
-const trimTrailingSlash = (url: string): string => url.replace(/\/+$/, '');
 
 /** Sin CDN, la URL pública es la del endpoint virtual-hosted del Space. */
 function defaultPublicBaseUrl(endpoint: string, bucket: string): string {
