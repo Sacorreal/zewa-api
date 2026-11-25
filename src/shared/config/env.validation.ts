@@ -1,5 +1,6 @@
 import { Type, plainToInstance } from 'class-transformer';
 import {
+  IsEmail,
   IsEnum,
   IsIn,
   IsInt,
@@ -12,10 +13,17 @@ import {
   ValidationError,
   validateSync,
 } from 'class-validator';
+import {
+  DEFAULT_EMAIL_PROVIDER,
+  EMAIL_PROVIDER_NAMES,
+  type EmailProviderName,
+} from '../notifications/email/contracts/email.types';
 import { NodeEnv } from './environment';
 
 const isLocal = (env: EnvironmentVariables) => env.NODE_ENV === NodeEnv.Local;
 const isRemote = (env: EnvironmentVariables) => !isLocal(env);
+const usesResend = (env: EnvironmentVariables) =>
+  (env.EMAIL_PROVIDER ?? DEFAULT_EMAIL_PROVIDER) === 'resend';
 
 /**
  * Catálogo único de variables de entorno. Si falta una requerida para el
@@ -101,6 +109,23 @@ export class EnvironmentVariables {
   @IsInt()
   @IsPositive()
   SPACES_SIGNED_URL_TTL_SECONDS?: number;
+
+  @IsOptional()
+  @IsIn(EMAIL_PROVIDER_NAMES)
+  EMAIL_PROVIDER?: EmailProviderName;
+
+  @IsString()
+  @IsNotEmpty()
+  EMAIL_FROM: string;
+
+  @IsOptional()
+  @IsEmail()
+  EMAIL_REPLY_TO?: string;
+
+  @ValidateIf(usesResend)
+  @IsString()
+  @IsNotEmpty()
+  RESEND_API_KEY?: string;
 }
 
 const describeError = (error: ValidationError): string =>
