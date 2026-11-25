@@ -1,6 +1,6 @@
 import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { EnvReader, readOptional, readRequired } from './env-reader';
-import { NodeEnv } from './environment';
+import { usesHostConnection } from './environment';
 
 const LOCAL_DEFAULT_ORIGINS = 'http://localhost:3000';
 const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
@@ -22,7 +22,7 @@ export function parseOrigins(raw: string): string[] {
 }
 
 function readOrigins(read: EnvReader): string {
-  return read('NODE_ENV') === NodeEnv.Local
+  return usesHostConnection(read('NODE_ENV'))
     ? (readOptional(read, 'CORS_ORIGINS') ?? LOCAL_DEFAULT_ORIGINS)
     : readRequired(read, 'CORS_ORIGINS');
 }

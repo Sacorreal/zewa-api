@@ -11,6 +11,18 @@ export class EventBusService {
     this.emitter.emit(event, payload);
   }
 
+  /**
+   * Emite y espera a que terminen todos los consumidores. Úsalo solo cuando el
+   * emisor necesita el efecto de los consumidores (p. ej. el resultado de un envío).
+   * Los fallos de cada consumidor quedan aislados y no se propagan.
+   */
+  async emitAndWait<E extends AppEventName>(
+    event: E,
+    payload: AppEventPayload<E>,
+  ): Promise<void> {
+    await this.emitter.emitAsync(event, payload);
+  }
+
   subscribe<E extends AppEventName>(
     event: E,
     handler: (payload: AppEventPayload<E>) => unknown,

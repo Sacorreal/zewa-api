@@ -16,6 +16,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Public } from '../../http/public.decorator';
 import type { StoredFile } from '../contracts/storage.types';
 import { StorageService } from '../storage.service';
 import {
@@ -32,6 +33,7 @@ const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
  * Endpoints de prueba del storage. Solo se registran fuera de producción y,
  * a diferencia de los endpoints reales, reciben el `tenantId` del cliente.
  */
+@Public()
 @Controller('dev/storage')
 @UseFilters(StorageKeyErrorFilter)
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))

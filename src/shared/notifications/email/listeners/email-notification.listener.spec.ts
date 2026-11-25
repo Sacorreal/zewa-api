@@ -106,4 +106,38 @@ describe('EmailNotificationListener', () => {
       expect.any(String),
     );
   });
+
+  describe('resultado del envío', () => {
+    let succeeded: jest.Mock;
+    let failed: jest.Mock;
+
+    beforeEach(() => {
+      succeeded = jest.fn();
+      failed = jest.fn();
+      eventBus.subscribe('invitation.delivery-succeeded', succeeded);
+      eventBus.subscribe('invitation.delivery-failed', failed);
+    });
+
+    it('informa el envío exitoso antes de que termine emitAndWait', async () => {
+      await eventBus.emitAndWait('invitation.created', invitationPayload);
+
+      expect(succeeded).toHaveBeenCalledWith(
+        expect.objectContaining({ invitationId: 'inv-1' }),
+      );
+      expect(failed).not.toHaveBeenCalled();
+    });
+
+    it('informa el fallo sin incluir el token de activación', async () => {
+      send.mockRejectedValue(new Error('proveedor caído'));
+
+      await eventBus.emitAndWait('invitation.created', invitationPayload);
+
+      expect(failed).toHaveBeenCalledWith({
+        invitationId: 'inv-1',
+        reason: 'proveedor caído',
+        occurredAt: expect.any(Date) as Date,
+      });
+      expect(succeeded).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -25,6 +25,19 @@ export interface AppEventMap {
     activationToken: string;
     expiresAt: Date;
   };
+
+  /** Resultado del envío del correo de invitación (lo emite el canal email). */
+  'invitation.delivery-succeeded': {
+    invitationId: string;
+    occurredAt: Date;
+  };
+
+  'invitation.delivery-failed': {
+    invitationId: string;
+    /** Descripción técnica del fallo; nunca incluye el token. */
+    reason: string;
+    occurredAt: Date;
+  };
 }
 
 export type AppEventName = keyof AppEventMap;

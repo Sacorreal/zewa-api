@@ -20,12 +20,15 @@
     "migration:show": "cross-env NODE_ENV=local typeorm-ts-node-commonjs migration:show -d src/shared/config/database/data-source.ts",
     "migration:run:develop": "cross-env NODE_ENV=develop typeorm-ts-node-commonjs migration:run -d src/shared/config/database/data-source.ts",
     "migration:run:prod": "cross-env NODE_ENV=production typeorm-ts-node-commonjs migration:run -d src/shared/config/database/data-source.ts",
+    "superadmin:create": "cross-env NODE_ENV=local ts-node src/cli/create-superadmin.ts",
+    "superadmin:create:develop": "cross-env NODE_ENV=develop node dist/cli/create-superadmin.js",
+    "superadmin:create:prod": "cross-env NODE_ENV=production node dist/cli/create-superadmin.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:cov": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:debug": "node --experimental-vm-modules --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/jest/bin/jest.js --runInBand",
-    "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json"
+    "test:e2e": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json --runInBand"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1176.0",
@@ -34,8 +37,11 @@
     "@nestjs/config": "^12.1.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/event-emitter": "^12.0.3",
+    "@nestjs/jwt": "^12.0.5",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/throttler": "^6.8.0",
     "@nestjs/typeorm": "^12.0.3",
+    "argon2": "^0.45.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "pdfkit": "^0.21.0",

@@ -3,14 +3,9 @@ import {
   Injectable,
   type PipeTransform,
 } from '@nestjs/common';
+import type { UploadedFileData } from '../../http/uploaded-file';
 
-/** Campos de `Express.Multer.File` que usa el storage (evita depender de @types/multer). */
-export interface UploadedFileData {
-  originalname: string;
-  mimetype: string;
-  size: number;
-  buffer: Buffer;
-}
+export type { UploadedFileData };
 
 @Injectable()
 export class RequiredFilePipe implements PipeTransform<

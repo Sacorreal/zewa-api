@@ -38,6 +38,13 @@ const remoteConnection = (read: EnvReader): ConnectionOptions => ({
   migrationsRun: true,
 });
 
+/** Base de datos efímera de integración/e2e: aplica las migraciones al arrancar. */
+const testConnection = (read: EnvReader): ConnectionOptions => ({
+  ...localConnection(read),
+  logging: false,
+  migrationsRun: true,
+});
+
 const CONNECTION_BY_ENV: Record<
   NodeEnv,
   (read: EnvReader) => ConnectionOptions
@@ -45,6 +52,7 @@ const CONNECTION_BY_ENV: Record<
   [NodeEnv.Local]: localConnection,
   [NodeEnv.Develop]: remoteConnection,
   [NodeEnv.Production]: remoteConnection,
+  [NodeEnv.Test]: testConnection,
 };
 
 export function buildDatabaseOptions(
@@ -62,6 +70,9 @@ export function buildDatabaseOptions(
     synchronize: false,
     migrations: [MIGRATIONS_GLOB],
     migrationsTableName: 'typeorm_migrations',
+    // gen_random_uuid() es nativo desde PostgreSQL 13: no requiere extensiones.
+    uuidExtension: 'pgcrypto',
+    installExtensions: false,
     ...CONNECTION_BY_ENV[nodeEnv](read),
   };
 }

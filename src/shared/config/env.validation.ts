@@ -9,6 +9,7 @@ import {
   IsPositive,
   IsString,
   IsUrl,
+  MinLength,
   ValidateIf,
   ValidationError,
   validateSync,
@@ -18,10 +19,14 @@ import {
   EMAIL_PROVIDER_NAMES,
   type EmailProviderName,
 } from '../notifications/email/contracts/email.types';
-import { NodeEnv } from './environment';
+import { NodeEnv, usesHostConnection } from './environment';
 
-const isLocal = (env: EnvironmentVariables) => env.NODE_ENV === NodeEnv.Local;
-const isRemote = (env: EnvironmentVariables) => !isLocal(env);
+const usesHostDb = (env: EnvironmentVariables) =>
+  usesHostConnection(env.NODE_ENV);
+/** HS256 exige un secreto de al menos 256 bits. */
+const MIN_JWT_SECRET_LENGTH = 32;
+
+const isRemote = (env: EnvironmentVariables) => !usesHostDb(env);
 const usesResend = (env: EnvironmentVariables) =>
   (env.EMAIL_PROVIDER ?? DEFAULT_EMAIL_PROVIDER) === 'resend';
 
@@ -38,7 +43,7 @@ export class EnvironmentVariables {
   @IsInt()
   PORT?: number;
 
-  @ValidateIf(isLocal)
+  @ValidateIf(usesHostDb)
   @IsString()
   @IsNotEmpty()
   DB_HOST?: string;
@@ -48,17 +53,17 @@ export class EnvironmentVariables {
   @IsInt()
   DB_PORT?: number;
 
-  @ValidateIf(isLocal)
+  @ValidateIf(usesHostDb)
   @IsString()
   @IsNotEmpty()
   DB_USERNAME?: string;
 
-  @ValidateIf(isLocal)
+  @ValidateIf(usesHostDb)
   @IsString()
   @IsNotEmpty()
   DB_PASSWORD?: string;
 
-  @ValidateIf(isLocal)
+  @ValidateIf(usesHostDb)
   @IsString()
   @IsNotEmpty()
   DB_NAME?: string;
@@ -129,6 +134,44 @@ export class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   RESEND_API_KEY?: string;
+
+  @IsString()
+  @MinLength(MIN_JWT_SECRET_LENGTH)
+  JWT_ACCESS_SECRET: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  JWT_ACCESS_TTL_SECONDS?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  REFRESH_TOKEN_TTL_SECONDS?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  INVITATION_TTL_HOURS?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  AUTH_MAX_FAILED_LOGINS?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  AUTH_LOCKOUT_MINUTES?: number;
+
+  @IsOptional()
+  @IsString()
+  TRUST_PROXY?: string;
 }
 
 const describeError = (error: ValidationError): string =>
