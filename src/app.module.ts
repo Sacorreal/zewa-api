@@ -7,6 +7,7 @@ import { InvitationsModule } from './modules/invitations/invitations.module';
 import { TenantWorkspaceModule } from './modules/tenant-workspace/tenant-workspace.module';
 import { AppConfigModule, DatabaseModule } from './shared/config';
 import { EventBusModule } from './shared/events';
+import { HealthModule } from './shared/health';
 import { EmailNotificationsModule } from './shared/notifications';
 import { RateLimitModule } from './shared/security/rate-limit';
 import { StorageDevModule, StorageModule } from './shared/storage';
@@ -20,6 +21,7 @@ import { StorageDevModule, StorageModule } from './shared/storage';
     StorageModule,
     StorageDevModule.forEnvironment(process.env.NODE_ENV),
     RateLimitModule,
+    HealthModule,
     AuthModule,
     InvitationsModule,
     AdminClientsModule,

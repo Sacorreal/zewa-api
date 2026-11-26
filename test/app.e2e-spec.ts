@@ -20,4 +20,16 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect('API is running successfully! ✔️');
   });
+
+  it('GET /api/v1/health es público y reporta la base de datos', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/health')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toMatchObject({
+          status: 'ok',
+          checks: { database: 'up' },
+        });
+      });
+  });
 });
